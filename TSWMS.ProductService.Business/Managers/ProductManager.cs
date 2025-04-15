@@ -15,4 +15,9 @@ public class ProductManager : IProductManager
     {
         return await _productRepository.GetProducts();
     }
+
+    public async Task<IEnumerable<ProductPrice>> GetProductPricesAsync(List<Guid> productIds)
+    {
+        return await _productRepository.GetProductPricesAsync(productIds);
+    }
 }

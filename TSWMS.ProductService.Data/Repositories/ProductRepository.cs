@@ -17,4 +17,16 @@ public class ProductRepository : IProductRepository
     {
         return await _productDbContext.Products.ToListAsync();
     }
+
+    public async Task<IEnumerable<ProductPrice>> GetProductPricesAsync(List<Guid> productIds)
+    {
+        return await _productDbContext.Products
+            .Where(p => productIds.Contains(p.ProductId))
+            .Select(p => new ProductPrice
+            {
+                ProductId = p.ProductId,
+                UnitPrice = p.Price
+            })
+            .ToListAsync();
+    }
 }
