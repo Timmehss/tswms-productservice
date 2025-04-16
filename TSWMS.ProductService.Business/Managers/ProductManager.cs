@@ -11,9 +11,9 @@ public class ProductManager : IProductManager
         _productRepository = productRepository;
     }
 
-    public async Task<IEnumerable<Product>> GetProducts()
+    public async Task<IEnumerable<Product>> GetProductsAsync()
     {
-        return await _productRepository.GetProducts();
+        return await _productRepository.GetProductsAsync();
     }
 
     public async Task<IEnumerable<ProductPrice>> GetProductPricesAsync(List<Guid> productIds)

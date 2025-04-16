@@ -13,7 +13,7 @@ public class ProductRepository : IProductRepository
         _productDbContext = productDbContext;
     }
 
-    public async Task<IEnumerable<Product>> GetProducts()
+    public async Task<IEnumerable<Product>> GetProductsAsync()
     {
         return await _productDbContext.Products.ToListAsync();
     }

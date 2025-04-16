@@ -42,16 +42,13 @@ builder.Services.ConfigureUserDbContext(builder.Configuration);
 builder.Services.ConfigureManagers();
 builder.Services.ConfigureRepositories();
 
-// Register RabbitMQ Listener
-builder.Services.AddSingleton<IConnectionFactory>(sp =>
+builder.Services.AddSingleton<IConnectionFactory>(_ =>
 {
-    // Configure and return a new instance of ConnectionFactory
     var factory = new ConnectionFactory
     {
-        HostName = "localhost",  // Replace with your RabbitMQ server address
-        UserName = "guest",     // Replace with your RabbitMQ credentials
-        Password = "guest",     // Replace with your RabbitMQ credentials
-        VirtualHost = "/"       // Replace with your RabbitMQ virtual host if necessary
+        HostName = "localhost",
+        UserName = "guest",
+        Password = "guest"
     };
     return factory;
 });

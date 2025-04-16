@@ -19,11 +19,11 @@ namespace TSWMS.ProductService.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetProducts()
+        public async Task<IActionResult> GetProductsAsync()
         {
             try
             {
-                var products = await _productManager.GetProducts();
+                var products = await _productManager.GetProductsAsync();
 
                 if (products == null || !products.Any())
                 {
@@ -35,6 +35,26 @@ namespace TSWMS.ProductService.Api.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, "An error occurred while retrieving products.");
+            }
+        }
+
+        [HttpGet("prices")]
+        public async Task<IActionResult> GetProductPricesAsync([FromQuery] List<Guid> productIds)
+        {
+            try
+            {
+                var productPrices = await _productManager.GetProductPricesAsync(productIds);
+
+                if (productPrices == null || !productPrices.Any())
+                {
+                    return NotFound("No product prices found.");
+                }
+
+                return Ok(_mapper.Map<List<ProductPriceDto>>(productPrices));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "An error occurred while retrieving product prices.");
             }
         }
     }

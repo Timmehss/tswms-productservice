@@ -1,27 +1,30 @@
 ﻿#region Usings
 
+using Microsoft.Extensions.DependencyInjection;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text.Json;
 using TSWMS.ProductService.Shared.Interfaces;
 using TSWMS.ProductService.Shared.Models;
 using TSWMS.ProductService.Shared.Models.Requests;
+using TSWMS.ProductService.Shared.Models.Responses;
 
 #endregion
 
 namespace TSWMS.ProductService.Data;
 
-public class ProductPriceListener : IProductPriceListener, IAsyncDisposable
+public class ProductPriceListener : IProductPriceListener
 {
     private readonly IConnectionFactory _connectionFactory;
-    private readonly IProductRepository _productRepository;
+    //private readonly IProductRepository _productRepository;
     private IConnection? _connection;
     private IChannel? _channel;
+    private readonly IServiceScopeFactory _serviceScopeFactory;
 
-    public ProductPriceListener(IConnectionFactory connectionFactory, IProductRepository productRepository)
+    public ProductPriceListener(IConnectionFactory connectionFactory, IServiceScopeFactory serviceScopeFactory)
     {
         _connectionFactory = connectionFactory;
-        _productRepository = productRepository;
+        _serviceScopeFactory = serviceScopeFactory;
     }
 
     // Initialize the RabbitMQ connection and consumer
@@ -61,8 +64,11 @@ public class ProductPriceListener : IProductPriceListener, IAsyncDisposable
             throw new InvalidOperationException("Invalid message received.");
         }
 
+        var listOfProductIds = new List<Guid>();
+        listOfProductIds.AddRange(request.ProductIds);
+
         // Assuming you have a method GetProductPrices to fetch the prices for products
-        var productPrices = await GetProductPricesAsync(request.ProductIds);
+        var productPrices = await GetProductPricesAsync(listOfProductIds);
 
         // Create the response with the prices
         var response = new BatchProductPriceResponse
@@ -91,23 +97,13 @@ public class ProductPriceListener : IProductPriceListener, IAsyncDisposable
     // Fetch product prices for a list of product IDs
     private async Task<List<ProductPrice>> GetProductPricesAsync(List<Guid> productIds)
     {
+        var scope = _serviceScopeFactory.CreateScope();
+        var _productRepository = scope.ServiceProvider.GetRequiredService<IProductRepository>();
+
         // Fetch the actual product prices from the repository
         var productPrices = await _productRepository.GetProductPricesAsync(productIds);
 
         // Convert to List if it's not already
         return productPrices.ToList();
-    }
-
-    // Implement IAsyncDisposable to clean up resources when done
-    public async ValueTask DisposeAsync()
-    {
-        if (_channel != null)
-            await _channel.CloseAsync();
-
-        if (_connection != null)
-            await _connection.CloseAsync();
-
-        _channel?.Dispose();
-        _connection?.Dispose();
     }
 }

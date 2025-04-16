@@ -4,6 +4,6 @@ namespace TSWMS.ProductService.Shared.Interfaces;
 
 public interface IProductManager
 {
-    Task<IEnumerable<Product>> GetProducts();
+    Task<IEnumerable<Product>> GetProductsAsync();
     Task<IEnumerable<ProductPrice>> GetProductPricesAsync(List<Guid> productIds);
 }
