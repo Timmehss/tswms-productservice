@@ -43,17 +43,19 @@ namespace TSWMS.ProductService.Api.Controllers
         {
             try
             {
-                var productPrices = await _productManager.GetProductPricesAsync(productIds);
+                var products = await _productManager.GetProductsByIdsAsync(productIds);
 
-                if (productPrices == null || !productPrices.Any())
+                if (products == null || !products.Any())
                 {
                     return NotFound("No product prices found.");
                 }
 
-                return Ok(_mapper.Map<List<ProductPriceDto>>(productPrices));
+                // Map Product to ProductPriceDto before returning
+                return Ok(_mapper.Map<List<ProductPriceDto>>(products));
             }
             catch (Exception ex)
             {
+                // Consider logging the exception ex for further diagnostics
                 return StatusCode(500, "An error occurred while retrieving product prices.");
             }
         }

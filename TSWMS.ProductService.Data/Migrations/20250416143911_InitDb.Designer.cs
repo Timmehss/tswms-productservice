@@ -12,8 +12,8 @@ using TSWMS.ProductService.Data;
 namespace TSWMS.ProductService.Data.Migrations
 {
     [DbContext(typeof(ProductsDbContext))]
-    [Migration("20250414122158_UpdateTableStructure")]
-    partial class UpdateTableStructure
+    [Migration("20250416143911_InitDb")]
+    partial class InitDb
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

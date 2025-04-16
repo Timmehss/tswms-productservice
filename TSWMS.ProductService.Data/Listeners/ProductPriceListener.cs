@@ -11,12 +11,11 @@ using TSWMS.ProductService.Shared.Models.Responses;
 
 #endregion
 
-namespace TSWMS.ProductService.Data;
+namespace TSWMS.ProductService.Data.Listeners;
 
 public class ProductPriceListener : IProductPriceListener
 {
     private readonly IConnectionFactory _connectionFactory;
-    //private readonly IProductRepository _productRepository;
     private IConnection? _connection;
     private IChannel? _channel;
     private readonly IServiceScopeFactory _serviceScopeFactory;
@@ -27,7 +26,6 @@ public class ProductPriceListener : IProductPriceListener
         _serviceScopeFactory = serviceScopeFactory;
     }
 
-    // Initialize the RabbitMQ connection and consumer
     public async Task InitializeAsync()
     {
         _connection = await _connectionFactory.CreateConnectionAsync();
@@ -53,7 +51,6 @@ public class ProductPriceListener : IProductPriceListener
         );
     }
 
-    // Handle incoming product price request
     private async Task HandlePriceRequestAsync(object model, BasicDeliverEventArgs ea)
     {
         var body = ea.Body.ToArray();
@@ -67,7 +64,7 @@ public class ProductPriceListener : IProductPriceListener
         var listOfProductIds = new List<Guid>();
         listOfProductIds.AddRange(request.ProductIds);
 
-        // Assuming you have a method GetProductPrices to fetch the prices for products
+        // Get the product prices
         var productPrices = await GetProductPricesAsync(listOfProductIds);
 
         // Create the response with the prices
@@ -79,7 +76,7 @@ public class ProductPriceListener : IProductPriceListener
         // Serialize the response to JSON
         var responseBody = JsonSerializer.SerializeToUtf8Bytes(response);
 
-        // Send the response back to the ReplyTo queue (specified in the incoming message)
+        // Send the response back to the ReplyTo queue
         var props = new BasicProperties
         {
             CorrelationId = ea.BasicProperties.CorrelationId,
@@ -94,14 +91,19 @@ public class ProductPriceListener : IProductPriceListener
         );
     }
 
-    // Fetch product prices for a list of product IDs
     private async Task<List<ProductPrice>> GetProductPricesAsync(List<Guid> productIds)
     {
-        var scope = _serviceScopeFactory.CreateScope();
+        using var scope = _serviceScopeFactory.CreateScope();
         var _productRepository = scope.ServiceProvider.GetRequiredService<IProductRepository>();
 
         // Fetch the actual product prices from the repository
-        var productPrices = await _productRepository.GetProductPricesAsync(productIds);
+        var products = await _productRepository.GetProductsByIdsAsync(productIds);
+
+        var productPrices = products.Select(product => new ProductPrice
+        {
+            ProductId = product.ProductId,
+            UnitPrice = product.Price
+        }).ToList();
 
         // Convert to List if it's not already
         return productPrices.ToList();

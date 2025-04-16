@@ -5,5 +5,7 @@ namespace TSWMS.ProductService.Shared.Interfaces;
 public interface IProductRepository
 {
     Task<IEnumerable<Product>> GetProductsAsync();
-    Task<IEnumerable<ProductPrice>> GetProductPricesAsync(List<Guid> productIds);
+    Task<IEnumerable<Product>> GetProductsByIdsAsync(IEnumerable<Guid> productIds);
+    Task UpdateProductsAvailableStockAsync(IEnumerable<Product> products);
+
 }

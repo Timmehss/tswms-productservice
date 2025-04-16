@@ -4,7 +4,7 @@ using RabbitMQ.Client;
 using System.Text.Json;
 using TSWMS.ProductService.Api.MappingProfiles;
 using TSWMS.ProductService.Configurations;
-using TSWMS.ProductService.Data;
+using TSWMS.ProductService.Data.Listeners;
 using TSWMS.ProductService.Shared.Interfaces;
 
 #endregion
@@ -53,8 +53,9 @@ builder.Services.AddSingleton<IConnectionFactory>(_ =>
     return factory;
 });
 
-// Register RabbitMQ Publisher
-builder.Services.AddScoped<IProductPriceListener, ProductPriceListener>();
+// Register RabbitMQ Consumer/Listener
+builder.Services.AddSingleton<IProductPriceListener, ProductPriceListener>();
+builder.Services.AddSingleton<IUpdateProductStockListener, UpdateProductStockListener>();
 
 // Additional service registrations
 builder.Services.AddControllers()
@@ -68,14 +69,16 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Initialize RabbitMQ Listener within async context
+// Initialize RabbitMQ Consumer/Listener within async context
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    var listener = services.GetRequiredService<IProductPriceListener>();
+    var productPriceListener = services.GetRequiredService<IProductPriceListener>();
+    var updateStockListener = services.GetRequiredService<IUpdateProductStockListener>();
 
     // Initialize the listener asynchronously
-    await listener.InitializeAsync();
+    await productPriceListener.InitializeAsync();
+    await updateStockListener.InitializeAsync();
 }
 
 app.UseCors("TSWMSPolicy");
