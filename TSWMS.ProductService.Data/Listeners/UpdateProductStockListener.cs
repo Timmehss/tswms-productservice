@@ -1,9 +1,17 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿#region Usings
+
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using System.Text;
 using System.Text.Json;
+using TSWMS.ProductService.Shared.Helpers;
 using TSWMS.ProductService.Shared.Interfaces;
 using TSWMS.ProductService.Shared.Models.Requests;
+using TSWMS.ProductService.Shared.Options;
+
+#endregion
 
 namespace TSWMS.ProductService.Data.Listeners;
 
@@ -13,11 +21,13 @@ public class UpdateProductStockListener : IUpdateProductStockListener
     private IConnection? _connection;
     private IChannel? _channel;
     private readonly IServiceScopeFactory _serviceScopeFactory;
+    private readonly string _secretKey;
 
-    public UpdateProductStockListener(IConnectionFactory connectionFactory, IServiceScopeFactory serviceScopeFactory)
+    public UpdateProductStockListener(IConnectionFactory connectionFactory, IServiceScopeFactory serviceScopeFactory, IOptions<HmacOptions> hmacOptions)
     {
         _connectionFactory = connectionFactory;
         _serviceScopeFactory = serviceScopeFactory;
+        _secretKey = hmacOptions.Value.SecretKey;
     }
 
     public async Task InitializeAsync()
@@ -47,6 +57,21 @@ public class UpdateProductStockListener : IUpdateProductStockListener
     private async Task HandleStockUpdateRequestAsync(object model, BasicDeliverEventArgs ea)
     {
         var body = ea.Body.ToArray();
+
+        // Validate HMAC signature
+        var receivedSignature = ea.BasicProperties.Headers != null &&
+                                ea.BasicProperties.Headers.TryGetValue("X-Signature", out var headerValue)
+                                ? Encoding.UTF8.GetString((byte[])headerValue)
+                                : null;
+
+        if (string.IsNullOrEmpty(receivedSignature) ||
+            !HmacHelper.ValidateHmac(body, receivedSignature, _secretKey))
+        {
+            Console.WriteLine($"[{DateTime.UtcNow}] Invalid or missing HMAC signature on stock update. CorrelationId: {ea.BasicProperties?.CorrelationId}");
+
+            return;
+        }
+
         var request = JsonSerializer.Deserialize<UpdateProductStockRequest>(body);
 
         if (request == null || request.UpdateProductStocks == null)
@@ -61,4 +86,3 @@ public class UpdateProductStockListener : IUpdateProductStockListener
         await _productManager.UpdateProductsAvailableStockAsync(request.UpdateProductStocks);
     }
 }
-

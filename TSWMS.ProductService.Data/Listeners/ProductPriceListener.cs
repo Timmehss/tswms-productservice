@@ -1,13 +1,17 @@
 ﻿#region Usings
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using System.Text;
 using System.Text.Json;
+using TSWMS.ProductService.Shared.Helpers;
 using TSWMS.ProductService.Shared.Interfaces;
 using TSWMS.ProductService.Shared.Models;
 using TSWMS.ProductService.Shared.Models.Requests;
 using TSWMS.ProductService.Shared.Models.Responses;
+using TSWMS.ProductService.Shared.Options;
 
 #endregion
 
@@ -19,11 +23,13 @@ public class ProductPriceListener : IProductPriceListener
     private IConnection? _connection;
     private IChannel? _channel;
     private readonly IServiceScopeFactory _serviceScopeFactory;
+    private readonly string _secretKey;
 
-    public ProductPriceListener(IConnectionFactory connectionFactory, IServiceScopeFactory serviceScopeFactory)
+    public ProductPriceListener(IConnectionFactory connectionFactory, IServiceScopeFactory serviceScopeFactory, IOptions<HmacOptions> hmacOptions)
     {
         _connectionFactory = connectionFactory;
         _serviceScopeFactory = serviceScopeFactory;
+        _secretKey = hmacOptions.Value.SecretKey;
     }
 
     public async Task InitializeAsync()
@@ -54,6 +60,22 @@ public class ProductPriceListener : IProductPriceListener
     private async Task HandlePriceRequestAsync(object model, BasicDeliverEventArgs ea)
     {
         var body = ea.Body.ToArray();
+
+        // Retrieve the signature from headers
+        var receivedSignature = ea.BasicProperties.Headers != null &&
+                                ea.BasicProperties.Headers.TryGetValue("X-Signature", out var headerValue)
+                                ? Encoding.UTF8.GetString((byte[])headerValue)
+                                : null;
+
+        if (string.IsNullOrEmpty(receivedSignature) ||
+            !HmacHelper.ValidateHmac(body, receivedSignature, _secretKey))
+        {
+            Console.WriteLine("Invalid or missing HMAC signature. Rejecting message.");
+            return;
+        }
+
+        // Signature valid — process the message
+
         var request = JsonSerializer.Deserialize<BatchProductPriceRequest>(body);
 
         if (request == null)
@@ -76,10 +98,16 @@ public class ProductPriceListener : IProductPriceListener
         // Serialize the response to JSON
         var responseBody = JsonSerializer.SerializeToUtf8Bytes(response);
 
+        var responseSignature = HmacHelper.GenerateHmac(responseBody, _secretKey);
+
         // Send the response back to the ReplyTo queue
         var props = new BasicProperties
         {
             CorrelationId = ea.BasicProperties.CorrelationId,
+            Headers = new Dictionary<string, object>
+            {
+                { "X-Signature", responseSignature }
+            }
         };
 
         await _channel.BasicPublishAsync(
