@@ -71,6 +71,34 @@ public class ProductPriceListener : IProductPriceListener
             !HmacHelper.ValidateHmac(body, receivedSignature, _secretKey))
         {
             Console.WriteLine("Invalid or missing HMAC signature. Rejecting message.");
+
+            // Send an error response back to the ReplyTo queue (optional)
+            var errorResponse = new { ErrorMessage = "Invalid HMAC signature" };
+            var errorBody = JsonSerializer.SerializeToUtf8Bytes(errorResponse);
+
+            var errorSignature = HmacHelper.GenerateHmac(errorBody, _secretKey);
+
+            var errorProps = new BasicProperties
+            {
+                CorrelationId = ea.BasicProperties.CorrelationId,
+                Headers = new Dictionary<string, object>
+                {
+                    { "X-Signature", errorSignature }
+                }
+            };
+
+            // Send the error response to a failure queue or reply-to (adjust accordingly)
+            await _channel.BasicPublishAsync(
+                exchange: "",
+                routingKey: ea.BasicProperties.ReplyTo,
+                mandatory: true,
+                basicProperties: errorProps,
+                body: errorBody
+            );
+
+            // Optionally, reject the message without requeueing
+            await _channel.BasicRejectAsync(ea.DeliveryTag, false);
+
             return;
         }
 
@@ -80,11 +108,11 @@ public class ProductPriceListener : IProductPriceListener
 
         if (request == null)
         {
-            throw new InvalidOperationException("Invalid message received.");
+            Console.WriteLine("Invalid message format. Rejecting message.");
+            return;
         }
 
-        var listOfProductIds = new List<Guid>();
-        listOfProductIds.AddRange(request.ProductIds);
+        var listOfProductIds = new List<Guid>(request.ProductIds);
 
         // Get the product prices
         var productPrices = await GetProductPricesAsync(listOfProductIds);
