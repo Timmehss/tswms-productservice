@@ -15,9 +15,6 @@ COPY TSWMS.ProductService.Configurations/ TSWMS.ProductService.Configurations/
 COPY TSWMS.ProductService.Data/ TSWMS.ProductService.Data/
 COPY TSWMS.ProductService.Shared/ TSWMS.ProductService.Shared/
 
-# Copy the test projects
-COPY TSWMS.ProductService.Data.IntegrationTests/ TSWMS.OrderService.Data.IntegrationTests/
-
 # Restore dependencies
 RUN dotnet restore "TSWMS.ProductService.sln"
 
