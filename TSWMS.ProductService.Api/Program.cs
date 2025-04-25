@@ -1,9 +1,11 @@
 #region Usings
 
+using Microsoft.EntityFrameworkCore;
 using RabbitMQ.Client;
 using System.Text.Json;
 using TSWMS.ProductService.Api.MappingProfiles;
 using TSWMS.ProductService.Configurations;
+using TSWMS.ProductService.Data;
 using TSWMS.ProductService.Data.Listeners;
 using TSWMS.ProductService.Shared.Interfaces;
 using TSWMS.ProductService.Shared.Options;
@@ -93,6 +95,19 @@ using (var scope = app.Services.CreateScope())
     // Initialize the listener asynchronously
     await productPriceListener.InitializeAsync();
     await updateStockListener.InitializeAsync();
+}
+
+// Apply Database Migrations if it's not in "Test" environment
+if (environment != "Test")
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var services = scope.ServiceProvider;
+        var dbContext = services.GetRequiredService<ProductsDbContext>();
+
+        // Apply pending migrations or create the database if it doesn't exist
+        dbContext.Database.Migrate();
+    }
 }
 
 app.UseCors("TSWMSPolicy");
