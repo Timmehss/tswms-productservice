@@ -70,8 +70,24 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Sign RabbitMQ messages with HMAC.
-var secretKey = Environment.GetEnvironmentVariable("HMAC_SECRET_KEY");
+string? secretKey;
+
+if (environment == "Test" || environment == "Docker")
+{
+    // Set the key only if it's not already set
+    secretKey = Environment.GetEnvironmentVariable("HMAC_SECRET_KEY");
+
+    if (string.IsNullOrEmpty(secretKey))
+    {
+        secretKey = "qWX4IlPFoIKLeSoiiT1JBAl7KvzIRwVm";
+        Environment.SetEnvironmentVariable("HMAC_SECRET_KEY", secretKey);
+    }
+}
+else
+{
+    // Sign RabbitMQ messages with HMAC.
+    secretKey = Environment.GetEnvironmentVariable("HMAC_SECRET_KEY");
+}
 
 if (string.IsNullOrEmpty(secretKey))
 {
@@ -80,7 +96,7 @@ if (string.IsNullOrEmpty(secretKey))
 
 builder.Services.Configure<HmacOptions>(options =>
 {
-    options.SecretKey = secretKey;
+    options.SecretKey = secretKey!;
 });
 
 var app = builder.Build();
