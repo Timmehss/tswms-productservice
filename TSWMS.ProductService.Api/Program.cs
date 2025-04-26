@@ -102,16 +102,16 @@ builder.Services.Configure<HmacOptions>(options =>
 var app = builder.Build();
 
 // Initialize RabbitMQ Consumer/Listener within async context
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    var productPriceListener = services.GetRequiredService<IProductPriceListener>();
-    var updateStockListener = services.GetRequiredService<IUpdateProductStockListener>();
+//using (var scope = app.Services.CreateScope())
+//{
+//    var services = scope.ServiceProvider;
+//    var productPriceListener = services.GetRequiredService<IProductPriceListener>();
+//    var updateStockListener = services.GetRequiredService<IUpdateProductStockListener>();
 
-    // Initialize the listener asynchronously
-    await productPriceListener.InitializeAsync();
-    await updateStockListener.InitializeAsync();
-}
+//    // Initialize the listener asynchronously
+//    await productPriceListener.InitializeAsync();
+//    await updateStockListener.InitializeAsync();
+//}
 
 // Apply Database Migrations if it's not in "Test" environment
 if (environment != "Test" || environment == "Docker")
