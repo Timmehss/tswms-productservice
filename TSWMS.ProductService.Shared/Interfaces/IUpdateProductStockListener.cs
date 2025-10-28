@@ -2,5 +2,5 @@
 
 public interface IUpdateProductStockListener
 {
-    Task InitializeAsync();
+    //Task InitializeAsync();
 }

@@ -1,7 +1,6 @@
 #region Usings
 
 using Microsoft.EntityFrameworkCore;
-using RabbitMQ.Client;
 using System.Text.Json;
 using TSWMS.ProductService.Api.MappingProfiles;
 using TSWMS.ProductService.Configurations;
@@ -45,16 +44,16 @@ builder.Services.ConfigureUserDbContext(builder.Configuration);
 builder.Services.ConfigureManagers();
 builder.Services.ConfigureRepositories();
 
-builder.Services.AddSingleton<IConnectionFactory>(_ =>
-{
-    var factory = new ConnectionFactory
-    {
-        HostName = Environment.GetEnvironmentVariable("RABBITMQ_HOST") ?? "localhost",
-        UserName = Environment.GetEnvironmentVariable("RABBITMQ_USER") ?? "guest",
-        Password = Environment.GetEnvironmentVariable("RABBITMQ_PASS") ?? "guest"
-    };
-    return factory;
-});
+//builder.Services.AddSingleton<IConnectionFactory>(_ =>
+//{
+//    var factory = new ConnectionFactory
+//    {
+//        HostName = Environment.GetEnvironmentVariable("RABBITMQ_HOST") ?? "localhost",
+//        UserName = Environment.GetEnvironmentVariable("RABBITMQ_USER") ?? "guest",
+//        Password = Environment.GetEnvironmentVariable("RABBITMQ_PASS") ?? "guest"
+//    };
+//    return factory;
+//});
 
 // Register RabbitMQ Consumer/Listener
 builder.Services.AddSingleton<IProductPriceListener, ProductPriceListener>();
@@ -102,16 +101,16 @@ builder.Services.Configure<HmacOptions>(options =>
 var app = builder.Build();
 
 // Initialize RabbitMQ Consumer/Listener within async context
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    var productPriceListener = services.GetRequiredService<IProductPriceListener>();
-    var updateStockListener = services.GetRequiredService<IUpdateProductStockListener>();
+//using (var scope = app.Services.CreateScope())
+//{
+//    var services = scope.ServiceProvider;
+//    var productPriceListener = services.GetRequiredService<IProductPriceListener>();
+//    var updateStockListener = services.GetRequiredService<IUpdateProductStockListener>();
 
-    // Initialize the listener asynchronously
-    await productPriceListener.InitializeAsync();
-    await updateStockListener.InitializeAsync();
-}
+//    // Initialize the listener asynchronously
+//    await productPriceListener.InitializeAsync();
+//    await updateStockListener.InitializeAsync();
+//}
 
 // Apply Database Migrations if it's not in "Test" environment
 if (environment != "Test" || environment == "Docker")

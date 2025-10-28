@@ -2,5 +2,5 @@
 
 public interface IProductPriceListener
 {
-    Task InitializeAsync();
+    //Task InitializeAsync();
 }

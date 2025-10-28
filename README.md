@@ -21,3 +21,8 @@ This document provides essential commands for managing the Docker setup of the P
 ```bash
 docker-compose -f docker-compose.prod.yml -p tswms up --pull always --detach
 ```
+
+```bash
+docker-compose -f docker-compose.test.yml -p tswms up --pull always --detach
+```
+
