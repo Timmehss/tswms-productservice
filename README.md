@@ -16,16 +16,20 @@ This document provides essential commands for managing the Docker setup of the P
 
 ## Docker Commands
 
-### 1. Docker Compose for docker-compose.prod.yml (All services).
+# Stop and remove all containers, networks, and volumes for this project
 
 ```bash
-docker-compose -f docker-compose.prod.yml -p tswms up --pull always --detach
+docker-compose -f docker-compose.test.yml -p tswms down -v
 ```
+
+# Pull and recreate everything cleanly
 
 ```bash
 docker-compose -f docker-compose.test.yml -p tswms up --pull always --detach
 ```
+
 # Run Dapr Sidecar
+
 ```bash
 dapr run --app-id productservice --app-port 3300 -- dotnet watch run --project ./TSWMS.ProductService.Api/TSWMS.ProductService.Api.csproj
 ```
