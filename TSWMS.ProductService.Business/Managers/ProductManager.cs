@@ -48,6 +48,7 @@ public class ProductManager : IProductManager
         }
 
         await _productRepository.UpdateProductsAvailableStockAsync(products);
+
         return Result.Ok();
     }
 }

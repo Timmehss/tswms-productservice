@@ -7,24 +7,30 @@ namespace TSWMS.ProductService.Api.Controllers;
 
 [Route("api/product-events")]
 [ApiController]
-public class ProductEventsController : ControllerBase
+public class ProductSubscriberController : ControllerBase
 {
     private readonly IOrderCreatedEventHandler _orderCreatedEventHandler;
 
-    public ProductEventsController(IOrderCreatedEventHandler orderCreatedHandler)
+    public ProductSubscriberController(IOrderCreatedEventHandler orderCreatedHandler)
     {
         _orderCreatedEventHandler = orderCreatedHandler;
     }
 
     [Topic("pubsub", "order.created")]
     [HttpPost("order-created")]
-    public async Task<IActionResult> HandleOrderCreatedEvent([FromBody] OrderCreatedEvent @event)
+    public async Task<IActionResult> ReceiveOrderCreatedEvent([FromBody] OrderCreatedEvent @event)
     {
-        if (@event == null || @event.OrderItems == null || !@event.OrderItems.Any())
+        // Basic payload validation
+        if (@event == null)
         {
-            return BadRequest("Invalid order.created event payload.");
+            return BadRequest("Event payload is null.");
+        }
+        if (@event.OrderItems == null || !@event.OrderItems.Any())
+        {
+            return BadRequest("Event contains no order items.");
         }
 
+        // Delegate all business logic to the business layer
         await _orderCreatedEventHandler.HandleOrderCreatedEventAsync(@event);
 
         return Ok();
