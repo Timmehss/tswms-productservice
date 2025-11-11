@@ -1,6 +1,7 @@
-﻿using TSWMS.ProductService.Shared.Interfaces;
+﻿using FluentResults;
+using TSWMS.ProductService.Shared.Interfaces;
 using TSWMS.ProductService.Shared.Models;
-using TSWMS.ProductService.Shared.Models.Requests;
+using TSWMS.ProductService.Shared.Models.DTOs;
 
 namespace TSWMS.ProductService.Business.Managers;
 
@@ -22,26 +23,28 @@ public class ProductManager : IProductManager
         return await _productRepository.GetProductsByIdsAsync(productIds);
     }
 
-    public async Task UpdateProductsAvailableStockAsync(IEnumerable<UpdateProductStock> stockUpdates)
+    public async Task<Result> UpdateProductsAvailableStockAsync(IEnumerable<UpdateProductStockDto> stockUpdates)
     {
-        // Retrieve current product stock levels
-        var productIds = stockUpdates.Select(stockUpdate => stockUpdate.ProductId).Distinct().ToList();
-        var products = await _productRepository.GetProductsByIdsAsync(productIds);
+        var products = await _productRepository.GetProductsByIdsAsync(stockUpdates.Select(s => s.ProductId));
+        var errors = new List<string>();
+
+        var stockUpdateDict = stockUpdates.ToDictionary(s => s.ProductId);
 
         foreach (var product in products)
         {
-            var stockUpdateProduct = stockUpdates.FirstOrDefault(stockUpdate => stockUpdate.ProductId == product.ProductId);
-            if (stockUpdateProduct != null)
+            if (stockUpdateDict.TryGetValue(product.ProductId, out var update))
             {
-                product.AvailableStock -= stockUpdateProduct.QuantityOrdered;
-                if (product.AvailableStock < 0)
-                {
-                    throw new InvalidOperationException($"Not enough stock for product {product.ProductId}.");
-                }
+                if (product.AvailableStock < update.QuantityOrdered)
+                    errors.Add($"Not enough stock for {product.ProductId}");
+                else
+                    product.AvailableStock -= update.QuantityOrdered;
             }
         }
 
-        // Update stock levels in the database
+        if (errors.Any())
+            return Result.Fail(string.Join("; ", errors));
+
         await _productRepository.UpdateProductsAvailableStockAsync(products);
+        return Result.Ok();
     }
 }

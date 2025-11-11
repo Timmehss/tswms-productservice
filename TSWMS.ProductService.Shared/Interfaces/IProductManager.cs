@@ -1,5 +1,6 @@
-﻿using TSWMS.ProductService.Shared.Models;
-using TSWMS.ProductService.Shared.Models.Requests;
+﻿using FluentResults;
+using TSWMS.ProductService.Shared.Models;
+using TSWMS.ProductService.Shared.Models.DTOs;
 
 namespace TSWMS.ProductService.Shared.Interfaces;
 
@@ -7,5 +8,5 @@ public interface IProductManager
 {
     Task<IEnumerable<Product>> GetProductsAsync();
     Task<IEnumerable<Product>> GetProductsByIdsAsync(IEnumerable<Guid> productIds);
-    Task UpdateProductsAvailableStockAsync(IEnumerable<UpdateProductStock> stockUpdates);
+    Task<Result> UpdateProductsAvailableStockAsync(IEnumerable<UpdateProductStockDto> stockUpdates);
 }

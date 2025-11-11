@@ -38,26 +38,26 @@ namespace TSWMS.ProductService.Api.Controllers
             }
         }
 
-        //[HttpGet("prices")]
-        //public async Task<IActionResult> GetProductPricesAsync([FromQuery] List<Guid> productIds)
-        //{
-        //    try
-        //    {
-        //        var products = await _productManager.GetProductsByIdsAsync(productIds);
+        [HttpGet("prices")]
+        public async Task<IActionResult> GetProductPricesAsync([FromQuery] List<Guid> productIds)
+        {
+            try
+            {
+                var products = await _productManager.GetProductsByIdsAsync(productIds);
 
-        //        if (products == null || !products.Any())
-        //        {
-        //            return NotFound("No product prices found.");
-        //        }
+                if (products == null || !products.Any())
+                {
+                    return NotFound("No product prices found.");
+                }
 
-        //        // Map Product to ProductPriceDto before returning
-        //        return Ok(_mapper.Map<List<ProductPriceDto>>(products));
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        // Consider logging the exception ex for further diagnostics
-        //        return StatusCode(500, "An error occurred while retrieving product prices.");
-        //    }
-        //}
+                // Map Product to ProductPriceDto before returning
+                return Ok(_mapper.Map<List<ProductPriceDto>>(products));
+            }
+            catch (Exception ex)
+            {
+                // Consider logging the exception ex for further diagnostics
+                return StatusCode(500, "An error occurred while retrieving product prices.");
+            }
+        }
     }
 }

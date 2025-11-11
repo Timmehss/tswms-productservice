@@ -5,8 +5,8 @@ using System.Text.Json;
 using TSWMS.ProductService.Api.MappingProfiles;
 using TSWMS.ProductService.Configurations;
 using TSWMS.ProductService.Data;
-using TSWMS.ProductService.Data.Listeners;
-using TSWMS.ProductService.Shared.Interfaces;
+using TSWMS.ProductService.Data.EventHandlers.Orders;
+using TSWMS.ProductService.Shared.Interfaces.EventHandlers;
 using TSWMS.ProductService.Shared.Options;
 
 #endregion
@@ -30,6 +30,9 @@ builder.Services.AddCors(o => o.AddPolicy("TSWMSPolicy", builder =>
            .AllowAnyHeader()
            .AllowCredentials();
 }));
+
+// Add Dapr
+builder.Services.AddDaprClient();
 
 // Configure AutoMapper Profiles
 builder.Services.AddAutoMapper(cfg =>
@@ -56,8 +59,10 @@ builder.Services.ConfigureRepositories();
 //});
 
 // Register RabbitMQ Consumer/Listener
-builder.Services.AddSingleton<IProductPriceListener, ProductPriceListener>();
-builder.Services.AddSingleton<IUpdateProductStockListener, UpdateProductStockListener>();
+//builder.Services.AddSingleton<IProductPriceListener, ProductPriceListener>();
+//builder.Services.AddSingleton<IUpdateProductStockListener, UpdateProductStockListener>();
+
+builder.Services.AddSingleton<IOrderCreatedEventHandler, OrderCreatedEventHandler>();
 
 // Additional service registrations
 builder.Services.AddControllers()
@@ -137,4 +142,8 @@ if (app.Environment.IsDevelopment() || environment == "Docker")
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
+
+// Add Dapr subscribe handler
+app.MapSubscribeHandler();
+
 app.Run();
