@@ -1,4 +1,6 @@
-﻿namespace TSWMS.ProductService.Shared.Models.Requests;
+﻿using TSWMS.ProductService.Shared.Models.DTOs;
+
+namespace TSWMS.ProductService.Shared.Models.Requests;
 
 public class UpdateProductStockRequest
 {

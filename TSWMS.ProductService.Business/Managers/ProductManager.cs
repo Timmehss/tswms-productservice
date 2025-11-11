@@ -8,6 +8,7 @@ namespace TSWMS.ProductService.Business.Managers;
 public class ProductManager : IProductManager
 {
     private readonly IProductRepository _productRepository;
+
     public ProductManager(IProductRepository productRepository)
     {
         _productRepository = productRepository;
@@ -42,7 +43,9 @@ public class ProductManager : IProductManager
         }
 
         if (errors.Any())
+        {
             return Result.Fail(string.Join("; ", errors));
+        }
 
         await _productRepository.UpdateProductsAvailableStockAsync(products);
         return Result.Ok();

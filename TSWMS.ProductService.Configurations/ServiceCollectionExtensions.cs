@@ -5,8 +5,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TSWMS.ProductService.Business.Managers;
 using TSWMS.ProductService.Data;
+using TSWMS.ProductService.Data.EventHandlers.Orders;
 using TSWMS.ProductService.Data.Repositories;
 using TSWMS.ProductService.Shared.Interfaces;
+using TSWMS.ProductService.Shared.Interfaces.EventHandlers;
 
 #endregion
 
@@ -36,6 +38,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection ConfigureManagers(this IServiceCollection services)
     {
         services.AddScoped<IProductManager, ProductManager>();
+        services.AddScoped<IOrderCreatedEventHandler, OrderCreatedEventHandler>();
 
         return services;
     }

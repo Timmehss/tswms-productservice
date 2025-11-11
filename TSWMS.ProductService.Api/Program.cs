@@ -5,8 +5,6 @@ using System.Text.Json;
 using TSWMS.ProductService.Api.MappingProfiles;
 using TSWMS.ProductService.Configurations;
 using TSWMS.ProductService.Data;
-using TSWMS.ProductService.Data.EventHandlers.Orders;
-using TSWMS.ProductService.Shared.Interfaces.EventHandlers;
 using TSWMS.ProductService.Shared.Options;
 
 #endregion
@@ -47,25 +45,9 @@ builder.Services.ConfigureUserDbContext(builder.Configuration);
 builder.Services.ConfigureManagers();
 builder.Services.ConfigureRepositories();
 
-//builder.Services.AddSingleton<IConnectionFactory>(_ =>
-//{
-//    var factory = new ConnectionFactory
-//    {
-//        HostName = Environment.GetEnvironmentVariable("RABBITMQ_HOST") ?? "localhost",
-//        UserName = Environment.GetEnvironmentVariable("RABBITMQ_USER") ?? "guest",
-//        Password = Environment.GetEnvironmentVariable("RABBITMQ_PASS") ?? "guest"
-//    };
-//    return factory;
-//});
-
-// Register RabbitMQ Consumer/Listener
-//builder.Services.AddSingleton<IProductPriceListener, ProductPriceListener>();
-//builder.Services.AddSingleton<IUpdateProductStockListener, UpdateProductStockListener>();
-
-builder.Services.AddSingleton<IOrderCreatedEventHandler, OrderCreatedEventHandler>();
-
 // Additional service registrations
 builder.Services.AddControllers()
+    .AddDapr()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
@@ -105,18 +87,6 @@ builder.Services.Configure<HmacOptions>(options =>
 
 var app = builder.Build();
 
-// Initialize RabbitMQ Consumer/Listener within async context
-//using (var scope = app.Services.CreateScope())
-//{
-//    var services = scope.ServiceProvider;
-//    var productPriceListener = services.GetRequiredService<IProductPriceListener>();
-//    var updateStockListener = services.GetRequiredService<IUpdateProductStockListener>();
-
-//    // Initialize the listener asynchronously
-//    await productPriceListener.InitializeAsync();
-//    await updateStockListener.InitializeAsync();
-//}
-
 // Apply Database Migrations if it's not in "Test" environment
 if (environment != "Test" || environment == "Docker")
 {
@@ -141,6 +111,9 @@ if (app.Environment.IsDevelopment() || environment == "Docker")
 
 app.UseHttpsRedirection();
 app.UseAuthorization();
+
+app.UseCloudEvents();
+
 app.MapControllers();
 
 // Add Dapr subscribe handler
