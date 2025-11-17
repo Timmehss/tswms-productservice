@@ -9,4 +9,6 @@ public interface IProductManager
     Task<IEnumerable<Product>> GetProductsAsync();
     Task<IEnumerable<Product>> GetProductsByIdsAsync(IEnumerable<Guid> productIds);
     Task<Result> UpdateProductsAvailableStockAsync(IEnumerable<UpdateProductStockDto> stockUpdates);
+    Task<Result<Product>> UpdateProductAsync(UpdateProductDto updateProductDto);
+
 }

@@ -3,8 +3,11 @@
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 using TSWMS.ProductService.Api.MappingProfiles;
+using TSWMS.ProductService.Api.Middlewares;
 using TSWMS.ProductService.Configurations;
 using TSWMS.ProductService.Data;
+using TSWMS.ProductService.Data.Publishers;
+using TSWMS.ProductService.Shared.Interfaces;
 using TSWMS.ProductService.Shared.Options;
 
 #endregion
@@ -19,6 +22,9 @@ builder.Configuration
     .SetBasePath(Directory.GetCurrentDirectory())
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
     .AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true);
+
+// Configure Dapr Services & Endpoints
+builder.Configuration.AddJsonFile("dapr.config.json", optional: false, reloadOnChange: true);
 
 // Add CORS Policy
 builder.Services.AddCors(o => o.AddPolicy("TSWMSPolicy", builder =>
@@ -44,6 +50,8 @@ builder.Services.ConfigureUserDbContext(builder.Configuration);
 // Configure Managers & Repositories
 builder.Services.ConfigureManagers();
 builder.Services.ConfigureRepositories();
+
+builder.Services.AddScoped<IEventPublisher, DaprEventPublisher>();
 
 // Additional service registrations
 builder.Services.AddControllers()
@@ -101,6 +109,9 @@ if (environment != "Test" || environment == "Docker")
 }
 
 app.UseCors("TSWMSPolicy");
+
+// Exception handling middleware
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 // Configure request pipeline
 if (app.Environment.IsDevelopment() || environment == "Docker")

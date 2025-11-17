@@ -1,0 +1,16 @@
+{
+  "Dapr": {
+    "ComponentNames": {
+      "PubSub": "pubsub"
+    },
+    "OrderServiceStateStoreName": "orderservice-statestore",
+    "Topics": {
+      "Orders": {
+        "OrderCreated": "order.created"
+      },
+      "Products": {
+        "ProductUpdated": "product.updated"
+      }
+    }
+  }
+}

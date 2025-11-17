@@ -18,6 +18,12 @@ public class ProductRepository : IProductRepository
         return await _productDbContext.Products.ToListAsync();
     }
 
+    public async Task<Product> GetProductByIdAsync(Guid productId)
+    {
+        return await _productDbContext.Products
+            .FirstOrDefaultAsync(p => p.ProductId == productId);
+    }
+
     public async Task<IEnumerable<Product>> GetProductsByIdsAsync(IEnumerable<Guid> productIds)
     {
         return await _productDbContext.Products
@@ -30,4 +36,12 @@ public class ProductRepository : IProductRepository
         _productDbContext.Products.UpdateRange(products);
         await _productDbContext.SaveChangesAsync();
     }
+
+    public async Task<Product> UpdateProductAsync(Product product)
+    {
+        _productDbContext.Products.Update(product);
+        await _productDbContext.SaveChangesAsync();
+        return product;
+    }
+
 }

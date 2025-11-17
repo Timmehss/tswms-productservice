@@ -2,16 +2,19 @@
 using TSWMS.ProductService.Shared.Interfaces;
 using TSWMS.ProductService.Shared.Models;
 using TSWMS.ProductService.Shared.Models.DTOs;
+using TSWMS.ProductService.Shared.Models.Events;
 
 namespace TSWMS.ProductService.Business.Managers;
 
 public class ProductManager : IProductManager
 {
     private readonly IProductRepository _productRepository;
+    private readonly IEventPublisher _eventPublisher;
 
-    public ProductManager(IProductRepository productRepository)
+    public ProductManager(IProductRepository productRepository, IEventPublisher eventPublisher)
     {
         _productRepository = productRepository;
+        _eventPublisher = eventPublisher;
     }
 
     public async Task<IEnumerable<Product>> GetProductsAsync()
@@ -51,4 +54,37 @@ public class ProductManager : IProductManager
 
         return Result.Ok();
     }
+
+    public async Task<Result<Product>> UpdateProductAsync(UpdateProductDto updateProductDto)
+    {
+        // Get original product for updating
+        var originalProduct = await _productRepository.GetProductByIdAsync(updateProductDto.ProductId);
+        if (originalProduct == null)
+        {
+            return Result.Fail("Failed to retrieve original product for updating.");
+        }
+
+        // Update fields
+        originalProduct.Name = updateProductDto.Name;
+        originalProduct.Price = updateProductDto.Price;
+
+        // Save changes
+        var updatedProduct = await _productRepository.UpdateProductAsync(originalProduct);
+        if (updatedProduct == null)
+        {
+            return Result.Fail("Failed to update product.");
+        }
+
+        // Create ProductUpdatedEvent
+        var productUpdatedEvent = new ProductUpdatedEvent
+        {
+            ProductId = updatedProduct.ProductId,
+        };
+
+        // Publish product.updated message
+        await _eventPublisher.PublishAsync(productUpdatedEvent);
+
+        return updatedProduct;
+    }
+
 }

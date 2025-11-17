@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using TSWMS.ProductService.Api.Dto;
 using TSWMS.ProductService.Shared.Interfaces;
+using TSWMS.ProductService.Shared.Models.DTOs;
 
 namespace TSWMS.ProductService.Api.Controllers
 {
@@ -41,23 +42,34 @@ namespace TSWMS.ProductService.Api.Controllers
         [HttpGet("prices")]
         public async Task<IActionResult> GetProductPricesAsync([FromQuery] List<Guid> productIds)
         {
-            try
-            {
-                var products = await _productManager.GetProductsByIdsAsync(productIds);
+            var products = await _productManager.GetProductsByIdsAsync(productIds);
 
-                if (products == null || !products.Any())
-                {
-                    return NotFound("No product prices found.");
-                }
-
-                // Map Product to ProductPriceDto before returning
-                return Ok(_mapper.Map<List<ProductPriceDto>>(products));
-            }
-            catch (Exception ex)
+            if (products == null || !products.Any())
             {
-                // Consider logging the exception ex for further diagnostics
-                return StatusCode(500, "An error occurred while retrieving product prices.");
+                return NotFound("No product prices found.");
             }
+
+            // Map Product to ProductPriceDto before returning
+            return Ok(_mapper.Map<List<ProductPriceDto>>(products));
         }
+
+        [HttpPut("update")]
+        public async Task<IActionResult> UpdateProduct([FromBody] UpdateProductDto updateProductDto)
+        {
+            if (updateProductDto == null)
+            {
+                return BadRequest("Updated product can't be null.");
+            }
+
+            var result = await _productManager.UpdateProductAsync(updateProductDto);
+            if (result.IsFailed)
+            {
+                return BadRequest(result.Errors.First().Message);
+            }
+
+            return Ok(result.Value);
+
+        }
+
     }
 }
