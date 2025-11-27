@@ -20,7 +20,7 @@ public class OrderCreatedEventHandler : IOrderCreatedEventHandler
             .Select(orderItem => new UpdateProductStockDto
             {
                 ProductId = orderItem.ProductId,
-                QuantityOrdered = orderItem.Quantity
+                QuantityChange = orderItem.Quantity
             }).ToList();
 
         await _productManager.UpdateProductsAvailableStockAsync(stockUpdates);

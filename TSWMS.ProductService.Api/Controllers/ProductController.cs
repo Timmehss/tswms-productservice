@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using FluentResults;
 using Microsoft.AspNetCore.Mvc;
 using TSWMS.ProductService.Api.Dto;
 using TSWMS.ProductService.Shared.Interfaces;
@@ -54,7 +55,7 @@ namespace TSWMS.ProductService.Api.Controllers
         }
 
         [HttpPut("update")]
-        public async Task<IActionResult> UpdateProduct([FromBody] UpdateProductDto updateProductDto)
+        public async Task<IActionResult> UpdateProductAsync([FromBody] UpdateProductDto updateProductDto)
         {
             if (updateProductDto == null)
             {
@@ -69,6 +70,23 @@ namespace TSWMS.ProductService.Api.Controllers
 
             return Ok(result.Value);
 
+        }
+
+        [HttpPut("update-stock")]
+        public async Task<IActionResult> UpdateProductStockAsync([FromBody] List<UpdateProductStockDto> updateProductStockDtos)
+        {
+            if (updateProductStockDtos == null || !updateProductStockDtos.Any())
+            {
+                return BadRequest(Result.Fail("No stock updates provided."));
+            }
+
+            var result = await _productManager.UpdateProductsAvailableStockAsync(updateProductStockDtos);
+            if (!result.IsSuccess)
+            {
+                return BadRequest(result);
+            }
+
+            return Ok(result);
         }
 
     }

@@ -29,28 +29,58 @@ public class ProductManager : IProductManager
 
     public async Task<Result> UpdateProductsAvailableStockAsync(IEnumerable<UpdateProductStockDto> stockUpdates)
     {
-        var products = await _productRepository.GetProductsByIdsAsync(stockUpdates.Select(s => s.ProductId));
-        var errors = new List<string>();
+        if (stockUpdates == null || !stockUpdates.Any())
+        {
+            Console.WriteLine("[ProductManager] No stock updates provided.");
+            return Result.Fail("No stock updates provided.");
+        }
 
+        var products = await _productRepository.GetProductsByIdsAsync(stockUpdates.Select(s => s.ProductId));
+        if (products == null || !products.Any())
+        {
+            Console.WriteLine("[ProductManager] No matching products found for the given IDs.");
+            return Result.Fail("No matching products found.");
+        }
+
+        var errors = new List<string>();
         var stockUpdateDict = stockUpdates.ToDictionary(s => s.ProductId);
 
+        Console.WriteLine("[ProductManager] Applying stock updates...");
         foreach (var product in products)
         {
             if (stockUpdateDict.TryGetValue(product.ProductId, out var update))
             {
-                if (product.AvailableStock < update.QuantityOrdered)
-                    errors.Add($"Not enough stock for {product.ProductId}");
+                Console.WriteLine($"[ProductManager] ProductId={product.ProductId} CurrentStock={product.AvailableStock} QuantityChange={update.QuantityChange}");
+
+                product.AvailableStock += update.QuantityChange;
+
+                if (product.AvailableStock < 0)
+                {
+                    errors.Add($"Not enough stock for ProductId={product.ProductId} (CurrentStock={product.AvailableStock - update.QuantityChange}, RequestedChange={update.QuantityChange})");
+                    // Revert the change so stock doesn't go negative
+                    product.AvailableStock -= update.QuantityChange;
+                    Console.WriteLine($"[ProductManager] Stock update for ProductId={product.ProductId} would go below zero. Change reverted.");
+                }
                 else
-                    product.AvailableStock -= update.QuantityOrdered;
+                {
+                    Console.WriteLine($"[ProductManager] ProductId={product.ProductId} new AvailableStock={product.AvailableStock}");
+                }
+            }
+            else
+            {
+                Console.WriteLine($"[ProductManager] No stock update found for ProductId={product.ProductId}");
             }
         }
 
         if (errors.Any())
         {
+            Console.WriteLine($"[ProductManager] Stock update failed: {string.Join("; ", errors)}");
             return Result.Fail(string.Join("; ", errors));
         }
 
+        Console.WriteLine("[ProductManager] Saving updated stock to repository...");
         await _productRepository.UpdateProductsAvailableStockAsync(products);
+        Console.WriteLine("[ProductManager] Stock successfully updated.");
 
         return Result.Ok();
     }
