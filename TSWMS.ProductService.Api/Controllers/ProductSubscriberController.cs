@@ -1,7 +1,5 @@
-﻿using Dapr;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using TSWMS.ProductService.Shared.Interfaces.EventHandlers;
-using TSWMS.ProductService.Shared.Models.Events;
 
 namespace TSWMS.ProductService.Api.Controllers;
 
@@ -16,24 +14,24 @@ public class ProductSubscriberController : ControllerBase
         _orderCreatedEventHandler = orderCreatedHandler;
     }
 
-    [Topic("pubsub", "order.created")]
-    [HttpPost("order-created")]
-    public async Task<IActionResult> ReceiveOrderCreatedEvent([FromBody] OrderCreatedEvent @event)
-    {
-        // Basic payload validation
-        if (@event == null)
-        {
-            return BadRequest("Event payload is null.");
-        }
-        if (@event.OrderItems == null || !@event.OrderItems.Any())
-        {
-            return BadRequest("Event contains no order items.");
-        }
+    //[Topic("pubsub", "order.created")]
+    //[HttpPost("order-created")]
+    //public async Task<IActionResult> ReceiveOrderCreatedEvent([FromBody] OrderCreatedEvent @event)
+    //{
+    //    // Basic payload validation
+    //    if (@event == null)
+    //    {
+    //        return BadRequest("Event payload is null.");
+    //    }
+    //    if (@event.OrderItems == null || !@event.OrderItems.Any())
+    //    {
+    //        return BadRequest("Event contains no order items.");
+    //    }
 
-        // Delegate all business logic to the business layer
-        await _orderCreatedEventHandler.HandleOrderCreatedEventAsync(@event);
+    //    // Delegate all business logic to the business layer
+    //    await _orderCreatedEventHandler.HandleOrderCreatedEventAsync(@event);
 
-        return Ok();
-    }
+    //    return Ok();
+    //}
 
 }

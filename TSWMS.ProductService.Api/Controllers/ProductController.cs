@@ -1,9 +1,9 @@
 ﻿using AutoMapper;
-using FluentResults;
 using Microsoft.AspNetCore.Mvc;
 using TSWMS.ProductService.Api.Dto;
 using TSWMS.ProductService.Shared.Interfaces;
 using TSWMS.ProductService.Shared.Models.DTOs;
+using TSWMS.ProductService.Shared.Models.Result;
 
 namespace TSWMS.ProductService.Api.Controllers
 {
@@ -72,21 +72,32 @@ namespace TSWMS.ProductService.Api.Controllers
 
         }
 
-        [HttpPut("update-stock")]
-        public async Task<IActionResult> UpdateProductStockAsync([FromBody] List<UpdateProductStockDto> updateProductStockDtos)
+        [HttpPut("deduct-stock")]
+        public async Task<IActionResult> DeductStockAsync([FromBody] List<UpdateProductStockDto> stockUpdates)
         {
-            if (updateProductStockDtos == null || !updateProductStockDtos.Any())
-            {
-                return BadRequest(Result.Fail("No stock updates provided."));
-            }
+            var result = await _productManager.DeductStockAsync(stockUpdates);
 
-            var result = await _productManager.UpdateProductsAvailableStockAsync(updateProductStockDtos);
-            if (!result.IsSuccess)
+            var responseDto = new StockUpdateResultDto
             {
-                return BadRequest(result);
-            }
+                Success = result.IsSuccess,
+                ErrorMessage = result.IsFailed ? result.Errors.FirstOrDefault()?.Message : null
+            };
 
-            return Ok(result);
+            return Ok(responseDto);
+        }
+
+        [HttpPut("restore-stock")]
+        public async Task<IActionResult> RestoreStockAsync([FromBody] List<UpdateProductStockDto> stockUpdates)
+        {
+            var result = await _productManager.RestoreStockAsync(stockUpdates);
+
+            var responseDto = new StockUpdateResultDto
+            {
+                Success = result.IsSuccess,
+                ErrorMessage = result.IsFailed ? result.Errors.FirstOrDefault()?.Message : null
+            };
+
+            return Ok(responseDto);
         }
 
     }

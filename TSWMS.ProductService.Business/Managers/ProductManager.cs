@@ -117,4 +117,87 @@ public class ProductManager : IProductManager
         return updatedProduct;
     }
 
+    // Deduct stock
+    public async Task<Result> DeductStockAsync(IEnumerable<UpdateProductStockDto> stockUpdates)
+    {
+        Console.WriteLine($"[ProductManager] DeductStockAsync called for {stockUpdates?.Count() ?? 0} items.");
+        if (stockUpdates != null)
+        {
+            foreach (var item in stockUpdates)
+            {
+                Console.WriteLine($"[ProductManager] DeductStockAsync - ProductId={item.ProductId}, QuantityChange={item.QuantityChange}");
+            }
+        }
+
+        return await UpdateStockInternalAsync(stockUpdates, isDeduction: true);
+    }
+
+    // Restore stock
+    public async Task<Result> RestoreStockAsync(IEnumerable<UpdateProductStockDto> stockUpdates)
+    {
+        Console.WriteLine($"[ProductManager] RestoreStockAsync called for {stockUpdates?.Count() ?? 0} items.");
+        if (stockUpdates != null)
+        {
+            foreach (var item in stockUpdates)
+            {
+                Console.WriteLine($"[ProductManager] RestoreStockAsync - ProductId={item.ProductId}, QuantityChange={item.QuantityChange}");
+            }
+        }
+
+        return await UpdateStockInternalAsync(stockUpdates, isDeduction: false);
+    }
+
+    // Internal method to avoid duplicating logic
+    private async Task<Result> UpdateStockInternalAsync(IEnumerable<UpdateProductStockDto> stockUpdates, bool isDeduction)
+    {
+        if (stockUpdates == null || !stockUpdates.Any())
+        {
+            return Result.Fail("No stock updates provided.");
+        }
+
+        var consolidatedUpdates = stockUpdates
+            .GroupBy(s => s.ProductId)
+            .ToDictionary(g => g.Key, g => g.Sum(x => x.QuantityChange));
+
+        var products = await _productRepository.GetProductsByIdsAsync(consolidatedUpdates.Keys);
+
+        if (products == null || !products.Any())
+        {
+            return Result.Fail("No matching products found.");
+        }
+
+        var errors = new List<string>();
+
+        Console.WriteLine("[ProductManager] Applying stock updates...");
+
+        foreach (var product in products)
+        {
+            if (consolidatedUpdates.TryGetValue(product.ProductId, out var quantityChange))
+            {
+                // Calculate change based on deduction vs restore
+                var change = isDeduction ? -quantityChange : quantityChange;
+                var newStock = product.AvailableStock + change;
+
+                Console.WriteLine($"[ProductManager] ProductId={product.ProductId} Current={product.AvailableStock} Change={change} New={newStock}");
+
+                if (newStock < 0)
+                {
+                    errors.Add($"Not enough stock for ProductId={product.ProductId}");
+                    continue;
+                }
+
+                product.AvailableStock = newStock;
+            }
+        }
+
+        if (errors.Any())
+        {
+            return Result.Fail(string.Join("; ", errors));
+        }
+
+        await _productRepository.UpdateProductsAvailableStockAsync(products);
+
+        return Result.Ok();
+    }
+
 }
