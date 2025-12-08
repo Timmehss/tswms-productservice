@@ -8,7 +8,6 @@ using TSWMS.ProductService.Configurations;
 using TSWMS.ProductService.Data;
 using TSWMS.ProductService.Data.Publishers;
 using TSWMS.ProductService.Shared.Interfaces;
-using TSWMS.ProductService.Shared.Options;
 
 #endregion
 
@@ -66,34 +65,34 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-string? secretKey;
+//string? secretKey;
 
-if (environment == "Test" || environment == "Docker")
-{
-    // Set the key only if it's not already set
-    secretKey = Environment.GetEnvironmentVariable("HMAC_SECRET_KEY");
+//if (environment == "Test" || environment == "Docker")
+//{
+//    // Set the key only if it's not already set
+//    secretKey = Environment.GetEnvironmentVariable("HMAC_SECRET_KEY");
 
-    if (string.IsNullOrEmpty(secretKey))
-    {
-        secretKey = "qWX4IlPFoIKLeSoiiT1JBAl7KvzIRwVm";
-        Environment.SetEnvironmentVariable("HMAC_SECRET_KEY", secretKey);
-    }
-}
-else
-{
-    // Sign RabbitMQ messages with HMAC.
-    secretKey = Environment.GetEnvironmentVariable("HMAC_SECRET_KEY");
-}
+//    if (string.IsNullOrEmpty(secretKey))
+//    {
+//        secretKey = "qWX4IlPFoIKLeSoiiT1JBAl7KvzIRwVm";
+//        Environment.SetEnvironmentVariable("HMAC_SECRET_KEY", secretKey);
+//    }
+//}
+//else
+//{
+//    // Sign RabbitMQ messages with HMAC.
+//    secretKey = Environment.GetEnvironmentVariable("HMAC_SECRET_KEY");
+//}
 
-if (string.IsNullOrEmpty(secretKey))
-{
-    throw new InvalidOperationException("HMAC secret key is missing!");
-}
+//if (string.IsNullOrEmpty(secretKey))
+//{
+//    throw new InvalidOperationException("HMAC secret key is missing!");
+//}
 
-builder.Services.Configure<HmacOptions>(options =>
-{
-    options.SecretKey = secretKey!;
-});
+//builder.Services.Configure<HmacOptions>(options =>
+//{
+//    options.SecretKey = secretKey!;
+//});
 
 var app = builder.Build();
 
