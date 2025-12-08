@@ -17,6 +17,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Get Environment
 var environment = builder.Environment.EnvironmentName;
 
+Console.WriteLine($"Initial environment: {environment}");
+
 // Configure App Configuration
 builder.Configuration
     .SetBasePath(Directory.GetCurrentDirectory())
@@ -96,7 +98,7 @@ builder.Services.Configure<HmacOptions>(options =>
 var app = builder.Build();
 
 // Apply Database Migrations if it's not in "Test" environment
-if (environment != "Test" || environment == "Docker")
+if (environment != "Test" || environment == "Docker" || environment == "Kubernetes")
 {
     using (var scope = app.Services.CreateScope())
     {
