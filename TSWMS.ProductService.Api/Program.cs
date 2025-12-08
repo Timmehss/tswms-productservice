@@ -115,7 +115,7 @@ app.UseCors("TSWMSPolicy");
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 // Configure request pipeline
-if (app.Environment.IsDevelopment() || environment == "Docker")
+if (app.Environment.IsDevelopment() || environment == "Docker" || environment == "Kubernetes")
 {
     app.UseSwagger();
     app.UseSwaggerUI();
