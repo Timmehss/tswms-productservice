@@ -18,8 +18,8 @@ spec:
         dapr.io/metrics-port: "9090"
         dapr.io/sidecar-cpu-request: "100m"
         dapr.io/sidecar-cpu-limit: "500m"
-        dapr.io/sidecar-memory-request: "128Mi"
-        dapr.io/sidecar-memory-limit: "256Mi"
+        dapr.io/sidecar-memory-request: "64Mi"
+        dapr.io/sidecar-memory-limit: "128Mi"
     spec:
       containers:
       - name: productservice
@@ -34,11 +34,11 @@ spec:
         - name: ASPNETCORE_URLS
           value: "http://+:3200"
         - name: ConnectionStrings__ProductServiceDatabase
-          value: "Server=db-product;Database=ProductServiceDb;User Id=sa;Password=TimTest123;Encrypt=False;"
+          value: "Server=db-order;Database=ProductServiceDb;User Id=sa;Password=TimTest123;Encrypt=False;"
         resources:
           requests:
             memory: "128Mi"
             cpu: "100m"
           limits:
-            memory: "512Mi"
+            memory: "300Mi"
             cpu: "500m"
