@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
       - name: productservice
-        image: timspitters03/tswms-productservice:latest
+        image: timspitters03/tswms-productservice:dev-latest
         imagePullPolicy: Always
         ports:
         - name: http
